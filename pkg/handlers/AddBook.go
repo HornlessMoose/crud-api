@@ -2,16 +2,15 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"net/http"
 
-	"github.com/hornlessmoose/crud-api/pkg/mocks"
 	"github.com/hornlessmoose/crud-api/pkg/models"
 )
 
-func AddBook(w http.ResponseWriter, r *http.Request) {
+func (h handler) AddBook(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 
@@ -22,10 +21,11 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 	var book models.Book
 	json.Unmarshal(body, &book)
 
-	book.Id = rand.Intn(100)
-	mocks.Books = append(mocks.Books, book)
+	if result := h.DB.Create(&book); result.Error != nil {
+		fmt.Println(result.Error)
+	}
 
-	w.WriteHeader(http.StatusCreated)
 	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode("Created")
 }

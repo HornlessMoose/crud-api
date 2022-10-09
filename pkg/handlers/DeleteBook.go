@@ -2,25 +2,30 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/hornlessmoose/crud-api/pkg/mocks"
+	"github.com/hornlessmoose/crud-api/pkg/models"
 )
 
-func DeleteBook(w http.ResponseWriter, r *http.Request) {
+func (h handler) DeleteBook(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	id, _ := strconv.Atoi(vars["id"])
+	var book models.Book
 
-	for index, book := range mocks.Books {
-		if book.Id == id {
-			mocks.Books = append(mocks.Books[:index],mocks.Books[index+1:]... )
-			w.Header().Add("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode("Deleted")
-			break
-		}
+	if result := h.DB.First(&book, id); result.Error != nil {
+		fmt.Println(result.Error)
+		w.Header().Add("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(http.StatusNotFound)
+		return
 	}
+	
+	h.DB.Delete(&book)
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode("Deleted")
 }
